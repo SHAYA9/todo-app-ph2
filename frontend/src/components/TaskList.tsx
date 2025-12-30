@@ -11,23 +11,42 @@ interface TaskListProps {
 
 export default function TaskList({ tasks, onUpdateTask, onDeleteTask }: TaskListProps) {
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
-  const [newTitle, setNewTitle] = useState('');
+  const [editingTitle, setEditingTitle] = useState('');
+  const [editingPriority, setEditingPriority] = useState<Task['priority']>('medium');
+  const [editingTagsInput, setEditingTagsInput] = useState('');
+  const [editingDueDate, setEditingDueDate] = useState('');
 
   const handleEdit = (task: Task) => {
     setEditingTaskId(task.id);
-    setNewTitle(task.title);
+    setEditingTitle(task.title);
+    setEditingPriority(task.priority || 'medium');
+    setEditingTagsInput(task.tags ? task.tags.join(', ') : '');
+    setEditingDueDate(task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '');
   };
 
   const handleSave = (id: number) => {
-    if (newTitle.trim()) {
-      onUpdateTask(id, { title: newTitle });
+    if (editingTitle.trim()) {
+      const updatedTask: Partial<Task> = { 
+        title: editingTitle,
+        priority: editingPriority,
+        tags: editingTagsInput.split(',').map(tag => tag.trim()).filter(Boolean),
+        due_date: editingDueDate ? new Date(editingDueDate).toISOString() : undefined,
+      };
+      onUpdateTask(id, updatedTask);
     }
     setEditingTaskId(null);
+    setEditingTitle('');
+    setEditingPriority('medium');
+    setEditingTagsInput('');
+    setEditingDueDate('');
   };
 
   const handleCancel = () => {
     setEditingTaskId(null);
-    setNewTitle('');
+    setEditingTitle('');
+    setEditingPriority('medium');
+    setEditingTagsInput('');
+    setEditingDueDate('');
   };
 
   if (tasks.length === 0) {
@@ -71,30 +90,83 @@ export default function TaskList({ tasks, onUpdateTask, onDeleteTask }: TaskList
             </button>
 
             {/* Task Content */}
-            {editingTaskId === task.id ? (
-              <input
-                type="text"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSave(task.id);
-                  if (e.key === 'Escape') handleCancel();
-                }}
-                className="flex-1 px-3 py-2 bg-white dark:bg-gray-600 border border-blue-500 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                autoFocus
-              />
-            ) : (
-              <span
-                onClick={() => onUpdateTask(task.id, { completed: !task.completed })}
-                className={`flex-1 cursor-pointer transition-all duration-300 ${
-                  task.completed 
-                    ? 'line-through text-gray-400 dark:text-gray-500' 
-                    : 'text-gray-900 dark:text-white'
-                }`}
-              >
-                {task.title}
-              </span>
-            )}
+            <div className="flex-1 flex flex-col">
+              {editingTaskId === task.id ? (
+                <>
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSave(task.id);
+                      if (e.key === 'Escape') handleCancel();
+                    }}
+                    className="px-3 py-2 bg-white dark:bg-gray-600 border border-blue-500 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                    autoFocus
+                  />
+                  <select
+                    value={editingPriority}
+                    onChange={(e) => setEditingPriority(e.target.value as Task['priority'])}
+                    className="mt-2 px-3 py-2 bg-white dark:bg-gray-600 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                  >
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={editingTagsInput}
+                    onChange={(e) => setEditingTagsInput(e.target.value)}
+                    placeholder="Tags (comma-separated)"
+                    className="mt-2 px-3 py-2 bg-white dark:bg-gray-600 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                  />
+                  <input
+                    type="date"
+                    value={editingDueDate}
+                    onChange={(e) => setEditingDueDate(e.target.value)}
+                    className="mt-2 px-3 py-2 bg-white dark:bg-gray-600 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                  />
+                </>
+              ) : (
+                <>
+                  <span
+                    onClick={() => onUpdateTask(task.id, { completed: !task.completed })}
+                    className={`flex-1 cursor-pointer transition-all duration-300 text-lg ${
+                      task.completed 
+                        ? 'line-through text-gray-400 dark:text-gray-500' 
+                        : 'text-gray-900 dark:text-white'
+                    }`}
+                  >
+                    {task.title}
+                  </span>
+                  <div className="flex flex-col mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {task.priority && (
+                      <span className={`capitalize font-medium ${
+                        task.priority === 'high' ? 'text-red-500' : 
+                        task.priority === 'medium' ? 'text-yellow-500' : 
+                        'text-green-500'
+                      }`}>
+                        Priority: {task.priority}
+                      </span>
+                    )}
+                    {task.tags && task.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {task.tags.map((tag, index) => (
+                          <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {task.due_date && (
+                      <span className="mt-1">
+                        Due: {new Date(task.due_date).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">

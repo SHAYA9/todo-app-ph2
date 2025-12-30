@@ -4,7 +4,7 @@ load_dotenv() # Load environment variables from .env
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
-from typing import List
+from typing import List, Optional
 
 from . import crud, models, schemas
 from .database import engine
@@ -48,8 +48,24 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     return crud.create_task(db=db, task=task)
 
 @app.get("/tasks", response_model=List[schemas.TaskInDB])
-def read_tasks(db: Session = Depends(get_db)):
-    return crud.get_tasks(db=db)
+def read_tasks(
+    search: Optional[str] = None,
+    completed: Optional[bool] = None,
+    priority: Optional[models.PriorityEnum] = None,
+    has_due_date: Optional[bool] = None,
+    sort_by: Optional[str] = None,
+    sort_order: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    return crud.get_tasks(
+        db=db,
+        search=search,
+        completed=completed,
+        priority=priority,
+        has_due_date=has_due_date,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
 
 @app.get("/")
 def read_root():

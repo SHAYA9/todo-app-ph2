@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getTasks, createTask, updateTask, deleteTask } from '@/services/api';
 import { Task } from '@/types/Task';
 import TaskList from '@/components/TaskList';
@@ -10,27 +10,43 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCompleted, setFilterCompleted] = useState<boolean | undefined>(undefined);
+  const [filterPriority, setFilterPriority] = useState<Task['priority'] | undefined>(undefined);
+  const [filterHasDueDate, setFilterHasDueDate] = useState<boolean | undefined>(undefined);
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<string | undefined>(undefined);
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const tasks = await getTasks();
-        setTasks(tasks);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTasks();
+
+  const fetchTasks = useCallback(async (
+    search?: string,
+    completed?: boolean,
+    priority?: Task['priority'],
+    has_due_date?: boolean,
+    sort_by?: string,
+    sort_order?: string
+  ) => {
+    try {
+      setLoading(true);
+      const fetchedTasks = await getTasks(search, completed, priority, has_due_date, sort_by, sort_order);
+      setTasks(fetchedTasks);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleAddTask = async (title: string) => {
+  useEffect(() => {
+    fetchTasks(searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder);
+  }, [fetchTasks, searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder]);
+
+  const handleAddTask = async (taskData: Partial<Task>) => {
     try {
-      const newTask = await createTask({ title });
+      const newTask = await createTask(taskData);
       setTasks([...tasks, newTask]);
       setError(null);
     } catch (err: any) {
@@ -41,8 +57,8 @@ export default function TasksPage() {
 
   const handleUpdateTask = async (id: number, updatedTask: Partial<Task>) => {
     try {
-      const newTask = await updateTask(id, updatedTask);
-      setTasks(tasks.map((task) => (task.id === id ? newTask : task)));
+      const result = await updateTask(id, updatedTask);
+      setTasks(tasks.map((task) => (task.id === id ? result : task)));
       setError(null);
     } catch (err: any) {
       setError(err.message);
@@ -102,6 +118,77 @@ export default function TasksPage() {
           <div className="p-6">
             {/* Add Task Section */}
             <AddTask onAddTask={handleAddTask} />
+
+            {/* Search and Filter/Sort Controls */}
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Search tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setShowAdvancedSearch(true)}
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+
+            {showAdvancedSearch && (
+              <div className="mb-4 space-y-4 transition-all duration-300 ease-in-out">
+                {/* Filter Controls */}
+                <div className="flex gap-4">
+                  <select
+                    value={filterCompleted === undefined ? '' : filterCompleted.toString()}
+                    onChange={(e) => setFilterCompleted(e.target.value === '' ? undefined : e.target.value === 'true')}
+                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                  >
+                    <option value="">All Status</option>
+                    <option value="true">Completed</option>
+                    <option value="false">Pending</option>
+                  </select>
+                  <select
+                    value={filterPriority || ''}
+                    onChange={(e) => setFilterPriority(e.target.value === '' ? undefined : e.target.value as Task['priority'])}
+                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                  >
+                    <option value="">All Priorities</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                  <select
+                    value={filterHasDueDate === undefined ? '' : filterHasDueDate.toString()}
+                    onChange={(e) => setFilterHasDueDate(e.target.value === '' ? undefined : e.target.value === 'true')}
+                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                  >
+                    <option value="">All Due Dates</option>
+                    <option value="true">Has Due Date</option>
+                    <option value="false">No Due Date</option>
+                  </select>
+                </div>
+                
+                {/* Sort Controls */}
+                <div className="flex gap-4">
+                  <select
+                    value={sortBy || ''}
+                    onChange={(e) => setSortBy(e.target.value === '' ? undefined : e.target.value)}
+                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                  >
+                    <option value="">Sort By</option>
+                    <option value="title">Title</option>
+                    <option value="priority">Priority</option>
+                    <option value="due_date">Due Date</option>
+                  </select>
+                  <select
+                    value={sortOrder || ''}
+                    onChange={(e) => setSortOrder(e.target.value === '' ? undefined : e.target.value)}
+                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                  >
+                    <option value="">Order</option>
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
             {/* Error Display */}
             {error && (

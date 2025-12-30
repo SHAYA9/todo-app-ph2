@@ -1,27 +1,21 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional, List
 from datetime import datetime
-from sqlalchemy import Column, Enum as SQLEnum, ARRAY, String
+from sqlalchemy import Column, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import JSON # Correct import for JSONB type
 import enum
 
 class PriorityEnum(str, enum.Enum):
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
-
-class RecurrenceEnum(str, enum.Enum):
-    NONE = "NONE"
-    DAILY = "DAILY"
-    WEEKLY = "WEEKLY"
-    MONTHLY = "MONTHLY"
+    high = "high"
+    medium = "medium"
+    low = "low"
 
 class Task(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     completed: bool = Field(default=False)
-    priority: str = Field(default="MEDIUM", sa_column=Column(SQLEnum('LOW', 'MEDIUM', 'HIGH', name='priority'), nullable=False))
-    tags: Optional[List[str]] = Field(default=None, sa_column=Column(ARRAY(String), nullable=True))
-    due_datetime: Optional[datetime] = Field(default=None, nullable=True)
-    recurrence: str = Field(default="NONE", sa_column=Column(SQLEnum('NONE', 'DAILY', 'WEEKLY', 'MONTHLY', name='recurrence'), nullable=False))
+    priority: PriorityEnum = Field(default=PriorityEnum.medium, sa_column=Column(SQLEnum(PriorityEnum), nullable=False))
+    tags: List[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False)) # Use JSON from dialects
+    due_date: Optional[datetime] = Field(default=None, nullable=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)

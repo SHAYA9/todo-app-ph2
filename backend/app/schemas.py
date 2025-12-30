@@ -1,9 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Json
 from typing import Optional, List
 from datetime import datetime
 
+from .models import PriorityEnum
+
 class TaskBase(BaseModel):
     title: str
+    priority: Optional[PriorityEnum] = PriorityEnum.medium
+    tags: Optional[List[str]] = []
+    due_date: Optional[datetime] = None
 
 class TaskCreate(TaskBase):
     pass
@@ -11,18 +16,13 @@ class TaskCreate(TaskBase):
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
     completed: Optional[bool] = None
-    priority: Optional[str] = None
+    priority: Optional[PriorityEnum] = None
     tags: Optional[List[str]] = None
-    due_datetime: Optional[datetime] = None
-    recurrence: Optional[str] = None
+    due_date: Optional[datetime] = None
 
 class TaskInDB(TaskBase):
     id: int
     completed: bool
-    priority: str
-    tags: Optional[List[str]] = None
-    due_datetime: Optional[datetime] = None
-    recurrence: str
     created_at: datetime
     updated_at: datetime
 
