@@ -1,55 +1,102 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Phase II – Full-Stack Todo App (Basic MVP) Constitution
+
+<!--
+Sync Impact Report:
+- Version change: none -> v1.0.0
+- Modified principles: none
+- Added sections: Purpose, Core Principles, Feature Scope (LOCKED), Explicit Exclusions, UI Principles, Technical Standards, Constraints, Success Criteria
+- Removed sections: none
+- Templates requiring updates: ✅ updated
+- Follow-up TODOs: RATIFICATION_DATE
+-->
+
+## Purpose
+
+Build a clean, minimal, and production-ready Todo application implementing only core task management features using a full-stack web architecture.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Strict Spec-Driven Development
+No manual coding. All code must be generated from specs.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Simplicity Over Completeness
+Focus on the locked-in feature scope and avoid speculative features or premature optimization.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Clear Separation of Concerns
+Maintain a clear separation between the frontend, backend, and database.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Deterministic and Predictable Behavior
+The application should behave as expected without any surprises.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Clean and Maintainable Code
+Generated code must be clean, readable, and maintainable.
 
-### [PRINCIPLE_6_NAME]
+## UI Principles
 
+### VI. Minimal and Clean UI
+The user interface should be minimal but visually clean.
 
-[PRINCIPLE__DESCRIPTION]
+### VII. Consistency
+Ensure consistent spacing, typography, and layout.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VIII. Clear Calls-to-Action
+Buttons for actions should be clearly identifiable.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IX. Responsive Layout
+The application should be usable on different screen sizes.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### X. Lightweight Styling
+No heavy UI frameworks should be used; only lightweight styling.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Technical Standards
+
+### XI. Frontend Technology
+Use Next.js with functional components.
+
+### XII. Backend Technology
+Use FastAPI with RESTful endpoints.
+
+### XIII. Database
+Use PostgreSQL (Neon) as the database.
+
+### XIV. ORM
+Use SQLModel as the Object-Relational Mapper.
+
+### XV. Environment-based Configuration
+Configuration should be managed through environment variables.
+
+## Feature Scope (LOCKED)
+
+- Add Task
+- Delete Task
+- Update Task
+- View Task List
+
+## Explicit Exclusions
+
+- No priorities
+- No tags
+- No recurring tasks
+- No notifications
+- No authentication
+- No background jobs
+
+## Constraints
+
+- All code must be generated from specs.
+- No speculative features.
+- No premature optimization.
+
+## Success Criteria
+
+- Tasks can be added, viewed, updated, and deleted.
+- Data persists in the Neon database.
+- Frontend and backend communicate correctly.
+- The UI is clean, usable, and visually pleasant.
+- The application runs locally without errors.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This Constitution supersedes all other practices. Amendments require documentation, approval, and a migration plan. All pull requests and reviews must verify compliance with this constitution.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: v1.0.0 | **Ratified**: TODO(RATIFICATION_DATE): Set initial ratification date. | **Last Amended**: 2025-12-30

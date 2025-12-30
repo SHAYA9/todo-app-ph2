@@ -1,0 +1,56 @@
+from dotenv import load_dotenv
+load_dotenv() # Load environment variables from .env
+
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session
+from typing import List
+
+from . import crud, models, schemas
+from .database import engine
+
+models.SQLModel.metadata.create_all(bind=engine)
+
+app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Dependency
+def get_db():
+    with Session(engine) as session:
+        yield session
+
+
+
+@app.delete("/tasks/{task_id}", response_model=schemas.TaskInDB)
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    db_task = crud.get_task(db, task_id=task_id)
+    if db_task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return crud.delete_task(db=db, db_task=db_task)
+
+@app.put("/tasks/{task_id}", response_model=schemas.TaskInDB)
+def update_task(task_id: int, task: schemas.TaskUpdate, db: Session = Depends(get_db)):
+    db_task = crud.get_task(db, task_id=task_id)
+    if db_task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return crud.update_task(db=db, db_task=db_task, task_in=task)
+
+@app.post("/tasks/", response_model=schemas.TaskInDB)
+def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
+    return crud.create_task(db=db, task=task)
+
+@app.get("/tasks", response_model=List[schemas.TaskInDB])
+def read_tasks(db: Session = Depends(get_db)):
+    return crud.get_tasks(db=db)
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
