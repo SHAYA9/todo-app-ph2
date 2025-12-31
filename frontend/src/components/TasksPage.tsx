@@ -6,6 +6,7 @@ import { Task } from '@/types/Task';
 import TaskList from '@/components/TaskList';
 import AddTask from '@/components/AddTask';
 import { requestNotificationPermission, showNotification } from '@/utils/notifications'; // Import notification utilities
+import Link from 'next/link';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -154,15 +155,15 @@ export default function TasksPage() {
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 mb-6 shadow-md">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl px-4 py-2">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl px-22 py-2">
                 <div className="text-sm font-medium">Total</div>
                 <div className="text-2xl font-bold">{totalCount}</div>
               </div>
-              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl px-4 py-2">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl px-22 py-2">
                 <div className="text-sm font-medium">Completed</div>
                 <div className="text-2xl font-bold">{completedCount}</div>
               </div>
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl px-4 py-2">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl px-22 py-2">
                 <div className="text-sm font-medium">Pending</div>
                 <div className="text-2xl font-bold">{totalCount - completedCount}</div>
               </div>
@@ -277,7 +278,7 @@ export default function TasksPage() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-          <p>Built with Next.js & FastAPI</p>
+          <p>Powered by <Link className='text-blue-500 hover:text-blue-600 font-bold' href="https://xpertsphere.vercel.app">Xpertsphere</Link></p>
         </div>
       </div>
     </div>
