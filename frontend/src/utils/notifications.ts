@@ -4,28 +4,39 @@ import { formatUtcIsoForDisplay } from './date-format';
 
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!('Notification' in window)) {
-    console.warn("This browser does not support desktop notifications");
-    return "denied"; // Treat as denied if not supported
+    console.warn("⚠️ This browser does not support desktop notifications");
+    return "denied";
   }
 
-  // Check if permission is already granted or denied
+  // Check if permission is already granted
   if (Notification.permission === "granted") {
-    console.log("Notification permission already granted");
+    console.log("✅ Notification permission already granted");
     return Notification.permission;
   }
   
+  // Check if permission was previously denied
   if (Notification.permission === "denied") {
-    console.log("Notification permission was previously denied");
+    console.warn("❌ Notification permission was previously denied. Please enable it in browser settings.");
     return Notification.permission;
   }
 
   // Request permission (this will show browser prompt)
   try {
+    console.log("🔔 Requesting notification permission...");
     const permission = await Notification.requestPermission();
-    console.log("Notification permission request result:", permission);
+    if (permission === "granted") {
+      console.log("✅ Notification permission granted! You'll receive task reminders.");
+      // Show a test notification
+      new Notification("Notifications Enabled!", {
+        body: "You'll now receive reminders for your upcoming tasks.",
+        icon: '/favicon.ico'
+      });
+    } else if (permission === "denied") {
+      console.warn("❌ Notification permission denied. You can enable it anytime in browser settings.");
+    }
     return permission;
   } catch (error) {
-    console.error("Error requesting notification permission:", error);
+    console.error("❌ Error requesting notification permission:", error);
     return "denied";
   }
 }

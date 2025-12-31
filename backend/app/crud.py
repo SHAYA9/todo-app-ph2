@@ -94,13 +94,18 @@ def update_task(db: Session, db_task: models.Task, task_in: schemas.TaskUpdate):
     if task_in.completed is not None:
         db_task.completed = task_in.completed
 
+    # If the task is being marked as uncompleted, ensure it's not archived.
+    # This specifically addresses the scenario where a recurring task might have been archived
+    # upon completion, but now is being marked uncompleted.
+    if task_in.completed is False:
+        db_task.is_archived = False
+
     # Handle completion of recurring tasks
     if task_in.completed is True and db_task.recurrence_type:
         if db_task.due_datetime is None:
             # Cannot create next instance without a due_datetime
             # Just mark current as archived if this happens (completed is already set above)
             db_task.is_archived = True
-            db_task.completed = True # Mark current task as completed
         else:
             # Calculate next due_datetime
             next_due = calculate_next_due_datetime(db_task.due_datetime, db_task.recurrence_type)

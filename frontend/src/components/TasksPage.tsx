@@ -54,10 +54,17 @@ export default function TasksPage() {
       console.log("Notification permission status:", permission);
       
       if (permission === "default") {
-        // If user hasn't decided yet, try requesting again after a short delay
+        // If user hasn't decided yet, show a friendly prompt
         setTimeout(async () => {
-          await requestNotificationPermission();
-        }, 2000);
+          const retry = await requestNotificationPermission();
+          if (retry === "denied") {
+            console.log("User denied notifications. They can enable it later in browser settings.");
+          }
+        }, 3000);
+      } else if (permission === "granted") {
+        console.log("✅ Notifications enabled! You'll receive reminders for upcoming tasks.");
+      } else {
+        console.log("Notifications blocked. Enable them in your browser settings to get task reminders.");
       }
     };
     
@@ -99,28 +106,42 @@ export default function TasksPage() {
   };
 
   const handleUpdateTask = async (id: number, updatedTask: Partial<Task>) => {
+    // Store original task state for rollback
+    const originalTasks = tasks;
+    
     try {
       console.log('Updating task ID:', id, 'with data:', updatedTask);
+      
+      // Optimistically update UI for better responsiveness
+      if (updatedTask.completed !== undefined) {
+        setTasks(prevTasks => prevTasks.map((task) => 
+          task.id === id ? { ...task, completed: updatedTask.completed! } : task
+        ));
+      }
       
       const result = await updateTask(id, updatedTask);
       console.log('Update successful, result:', result);
       
       // If the task was archived (recurring task completion), remove it from view
-      if (result.is_archived === true) {
-        console.log('Task archived, removing from list and fetching updated tasks...');
+      if (result.is_archived === true && result.recurrence_type) {
+        console.log('✅ Recurring task completed! Creating next instance...');
         // Remove the archived task from state
         setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
         // Fetch the updated list (which includes the new recurring instance)
         await fetchTasks(searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder);
       } else {
-        // For non-recurring tasks or other updates, just update the task in state
-        setTasks(prevTasks => prevTasks.map((task) => (task.id === id ? result : task)));
+        // For non-recurring tasks or other updates, ensure the task stays updated
+        setTasks(prevTasks => prevTasks.map((task) => 
+          task.id === id ? { ...task, ...result } : task
+        ));
       }
       
       setError(null);
     } catch (err: any) {
-      console.error('Error updating task:', err);
+      console.error('❌ Error updating task:', err);
       setError(err.message || 'Failed to update task');
+      // Revert to original state on error
+      setTasks(originalTasks);
     }
   };
 
@@ -143,9 +164,9 @@ export default function TasksPage() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            My Tasks
-          </h1>
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-500 to-purple-800 bg-clip-text text-transparent">
+                  TaskFlow
+                </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Stay organized and productive
           </p>
@@ -277,8 +298,41 @@ export default function TasksPage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-          <p>Powered by <Link className='text-blue-500 hover:text-blue-600 font-bold' href="https://xpertsphere.vercel.app">Xpertsphere</Link></p>
+        <div className="mt-12 mb-6">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-md p-6">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  TaskFlow
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                Stay organized, stay productive
+              </p>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Powered by</span>
+                <Link 
+                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold transition-colors duration-200 flex items-center gap-1 group" 
+                  href="https://xpertsphere.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="group-hover:underline">Xpertsphere</span>
+                  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
+              </div>
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                © 2025 All rights reserved
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

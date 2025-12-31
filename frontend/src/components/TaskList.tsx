@@ -71,18 +71,19 @@ export default function TaskList({ tasks, onUpdateTask, onDeleteTask }: TaskList
         <div 
           key={task.id} 
           className={`group p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 ${
-            task.completed ? 'opacity-75' : ''
+            task.completed ? 'opacity-60' : ''
           }`}
         >
           <div className="flex items-center gap-3">
             {/* Checkbox */}
             <button
               onClick={() => onUpdateTask(task.id, { completed: !task.completed })}
-              className="flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-300 hover:scale-110"
+              className="flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
               style={{
                 borderColor: task.completed ? '#10b981' : '#d1d5db',
                 backgroundColor: task.completed ? '#10b981' : 'transparent'
               }}
+              aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
             >
               {task.completed && (
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,16 +143,23 @@ export default function TaskList({ tasks, onUpdateTask, onDeleteTask }: TaskList
                 </>
               ) : (
                 <>
-                  <span
-                    onClick={() => onUpdateTask(task.id, { completed: !task.completed })}
-                    className={`flex-1 cursor-pointer transition-all duration-300 text-lg ${
-                      task.completed 
-                        ? 'line-through text-gray-400 dark:text-gray-500' 
-                        : 'text-gray-900 dark:text-white'
-                    }`}
-                  >
-                    {task.title}
-                  </span>
+                  <div className="flex-1">
+                    <span
+                      onClick={() => onUpdateTask(task.id, { completed: !task.completed })}
+                      className={`cursor-pointer transition-all duration-300 text-lg ${
+                        task.completed 
+                          ? 'line-through text-gray-400 dark:text-gray-500' 
+                          : 'text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      {task.title}
+                    </span>
+                    {task.recurrence_type && (
+                      <span className="ml-2 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300 px-2 py-0.5 rounded-full">
+                        🔄 Recurring
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-col mt-1 text-sm text-gray-500 dark:text-gray-400">
                     {task.priority && (
                       <span className={`capitalize font-medium ${

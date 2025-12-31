@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Todo App by Xpertsphere",
+  title: "TaskFLow by Xpertsphere",
   description: "Track your tasks efficiently with Xpertsphere's Todo App.",
 };
 
