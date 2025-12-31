@@ -118,6 +118,7 @@ def update_task(db: Session, db_task: models.Task, task_in: schemas.TaskUpdate):
                 completed=False
             )
             db.add(new_task) # Add the new task instance
+            newly_created_task = new_task # Store reference to the new task
 
             # Archive the current task instance (completed is already set above)
             db_task.is_archived = True
@@ -127,6 +128,30 @@ def update_task(db: Session, db_task: models.Task, task_in: schemas.TaskUpdate):
         db_task.title = task_in.title
     if task_in.priority is not None:
         db_task.priority = task_in.priority
+    if task_in.tags is not None:
+        db_task.tags = task_in.tags
+    if task_in.due_datetime is not None:
+        db_task.due_datetime = task_in.due_datetime
+    if task_in.recurrence_type is not None:
+        db_task.recurrence_type = task_in.recurrence_type
+        # If recurrence is stopped (set to None/empty), clear recurrence_id
+        if task_in.recurrence_type is None and db_task.recurrence_id:
+            db_task.recurrence_id = None
+    if task_in.recurrence_id is not None:
+        db_task.recurrence_id = task_in.recurrence_id
+    if task_in.is_archived is not None:
+        db_task.is_archived = task_in.is_archived
+
+    db_task.updated_at = datetime.utcnow()
+    db.add(db_task) # Ensure db_task is also in session for its updates
+    db.commit()
+
+    if newly_created_task:
+        db.refresh(newly_created_task)
+        return newly_created_task # Return the new task if one was created
+    else:
+        db.refresh(db_task)
+        return db_task # Otherwise return the modified original task
 
 def delete_task(db: Session, db_task: models.Task):
     db.delete(db_task)
