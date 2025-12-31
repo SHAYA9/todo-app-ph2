@@ -83,7 +83,7 @@ Click "Import"
 
 **Configure:**
 1. **Framework:** Next.js ✅ (auto-detected)
-2. **Root Directory:** ./ (default)
+2. **Root Directory:** `frontend` (IMPORTANT: Must change from ./ to frontend)
 3. **Environment Variables:**
    - Click "Add"
    - Name: `DATABASE_URL`

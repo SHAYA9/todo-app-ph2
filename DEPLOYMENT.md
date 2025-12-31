@@ -51,8 +51,8 @@ git push -u origin main
 
 4. **Configure Project:**
    - **Framework Preset:** Next.js (should be auto-detected)
-   - **Root Directory:** `./` (leave as is)
-   - **Build Command:** Leave default
+   - **Root Directory:** `frontend` (IMPORTANT: Change from ./ to frontend)
+   - **Build Command:** Leave default or use `npm run build`
    - **Output Directory:** Leave default
 
 5. **Environment Variables:**
