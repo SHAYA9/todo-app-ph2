@@ -1,6 +1,6 @@
 import { Task } from '@/types/Task';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = '/api';
 
 const handleError = async (response: Response) => {
   if (!response.ok) {
