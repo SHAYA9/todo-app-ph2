@@ -70,3 +70,10 @@ export const deleteTask = async (id: number): Promise<void> => {
   });
   return handleError(response).then(() => {});
 };
+
+export const getUpcomingTasks = async (minutesOffset: number = 15): Promise<Task[]> => {
+  const url = new URL(`${API_URL}/tasks/upcoming`);
+  url.searchParams.append('minutes_offset', minutesOffset.toString());
+  const response = await fetch(url.toString());
+  return handleError(response).then((res) => res.json());
+};

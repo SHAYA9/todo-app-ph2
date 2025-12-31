@@ -29,6 +29,13 @@ def get_db():
 
 
 
+@app.get("/tasks/upcoming", response_model=List[schemas.TaskInDB])
+def read_upcoming_tasks(
+    minutes_offset: int = 15,
+    db: Session = Depends(get_db)
+):
+    return crud.get_upcoming_tasks(db=db, minutes_offset=minutes_offset)
+
 @app.delete("/tasks/{task_id}", response_model=schemas.TaskInDB)
 def delete_task(task_id: int, db: Session = Depends(get_db)):
     db_task = crud.get_task(db, task_id=task_id)

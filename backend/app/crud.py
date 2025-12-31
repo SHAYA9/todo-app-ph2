@@ -87,6 +87,9 @@ def create_task(db: Session, task: schemas.TaskCreate):
     return db_task
 
 def update_task(db: Session, db_task: models.Task, task_in: schemas.TaskUpdate):
+    # Initialize variable to track if a new recurring task was created
+    newly_created_task = None
+    
     # Always update completed status if provided in the input
     if task_in.completed is not None:
         db_task.completed = task_in.completed
@@ -118,7 +121,7 @@ def update_task(db: Session, db_task: models.Task, task_in: schemas.TaskUpdate):
                 completed=False
             )
             db.add(new_task) # Add the new task instance
-            newly_created_task = new_task # Store reference to the new task
+            newly_created_task = new_task # Store reference to the newly created task
 
             # Archive the current task instance (completed is already set above)
             db_task.is_archived = True
@@ -146,12 +149,12 @@ def update_task(db: Session, db_task: models.Task, task_in: schemas.TaskUpdate):
     db.add(db_task) # Ensure db_task is also in session for its updates
     db.commit()
 
+    # Always refresh and return the original task (the one that was updated/completed)
+    # The newly created recurring instance will appear when tasks are fetched next time
+    db.refresh(db_task)
     if newly_created_task:
         db.refresh(newly_created_task)
-        return newly_created_task # Return the new task if one was created
-    else:
-        db.refresh(db_task)
-        return db_task # Otherwise return the modified original task
+    return db_task
 
 def delete_task(db: Session, db_task: models.Task):
     db.delete(db_task)

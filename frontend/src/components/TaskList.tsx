@@ -1,7 +1,6 @@
-'use client';
-
-import { Task } from '@/types/Task';
+import { Task, RecurrenceType } from '@/types/Task'; // Import RecurrenceType
 import { useState } from 'react';
+import { formatUtcIsoToDatetimeLocalInput, parseDatetimeLocalInputToUtcIso, formatUtcIsoForDisplay } from '@/utils/date-format'; // Import the helper
 
 interface TaskListProps {
   tasks: Task[];
@@ -14,14 +13,16 @@ export default function TaskList({ tasks, onUpdateTask, onDeleteTask }: TaskList
   const [editingTitle, setEditingTitle] = useState('');
   const [editingPriority, setEditingPriority] = useState<Task['priority']>('medium');
   const [editingTagsInput, setEditingTagsInput] = useState('');
-  const [editingDueDate, setEditingDueDate] = useState('');
+  const [editingDueDate, setEditingDueDate] = useState(''); // This state will now hold YYYY-MM-DDTHH:MM
+  const [editingRecurrenceType, setEditingRecurrenceType] = useState<RecurrenceType | undefined>(undefined); // New state
 
   const handleEdit = (task: Task) => {
     setEditingTaskId(task.id);
     setEditingTitle(task.title);
     setEditingPriority(task.priority || 'medium');
     setEditingTagsInput(task.tags ? task.tags.join(', ') : '');
-    setEditingDueDate(task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '');
+    setEditingDueDate(task.due_datetime ? formatUtcIsoToDatetimeLocalInput(task.due_datetime) : ''); // Use helper
+    setEditingRecurrenceType(task.recurrence_type);
   };
 
   const handleSave = (id: number) => {
@@ -30,7 +31,8 @@ export default function TaskList({ tasks, onUpdateTask, onDeleteTask }: TaskList
         title: editingTitle,
         priority: editingPriority,
         tags: editingTagsInput.split(',').map(tag => tag.trim()).filter(Boolean),
-        due_date: editingDueDate ? new Date(editingDueDate).toISOString() : undefined,
+        due_datetime: parseDatetimeLocalInputToUtcIso(editingDueDate), // Use the helper function
+        recurrence_type: editingRecurrenceType,
       };
       onUpdateTask(id, updatedTask);
     }
@@ -121,11 +123,22 @@ export default function TaskList({ tasks, onUpdateTask, onDeleteTask }: TaskList
                     className="mt-2 px-3 py-2 bg-white dark:bg-gray-600 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
                   />
                   <input
-                    type="date"
+                    type="datetime-local"
                     value={editingDueDate}
                     onChange={(e) => setEditingDueDate(e.target.value)}
                     className="mt-2 px-3 py-2 bg-white dark:bg-gray-600 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
                   />
+                  {/* New Recurrence Type dropdown for editing */}
+                  <select
+                    value={editingRecurrenceType || ''}
+                    onChange={(e) => setEditingRecurrenceType(e.target.value === '' ? undefined : e.target.value as RecurrenceType)}
+                    className="mt-2 px-3 py-2 bg-white dark:bg-gray-600 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                  >
+                    <option value="">No Recurrence</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
                 </>
               ) : (
                 <>
@@ -158,9 +171,19 @@ export default function TaskList({ tasks, onUpdateTask, onDeleteTask }: TaskList
                         ))}
                       </div>
                     )}
-                    {task.due_date && (
+                    {task.due_datetime && (
                       <span className="mt-1">
-                        Due: {new Date(task.due_date).toLocaleDateString()}
+                        Due: {formatUtcIsoForDisplay(task.due_datetime)}
+                      </span>
+                    )}
+                    {task.recurrence_type && (
+                      <span className="mt-1 capitalize">
+                        Repeats: {task.recurrence_type}
+                      </span>
+                    )}
+                    {task.is_archived && (
+                      <span className="mt-1 text-gray-400 dark:text-gray-500">
+                        (Archived)
                       </span>
                     )}
                   </div>

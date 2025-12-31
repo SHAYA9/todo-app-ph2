@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Task } from '@/types/Task';
+import { Task, RecurrenceType } from '@/types/Task'; // Import RecurrenceType
+import { parseDatetimeLocalInputToUtcIso } from '@/utils/date-format'; // Import the helper
 
 interface AddTaskProps {
   onAddTask: (task: Partial<Task>) => void;
@@ -12,6 +13,7 @@ export default function AddTask({ onAddTask }: AddTaskProps) {
   const [priority, setPriority] = useState<Task['priority']>('medium');
   const [tagsInput, setTagsInput] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType | undefined>(undefined); // New state for recurrence
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,13 +24,15 @@ export default function AddTask({ onAddTask }: AddTaskProps) {
       title,
       priority,
       tags,
-      due_date: dueDate ? new Date(dueDate).toISOString() : undefined,
+      due_datetime: parseDatetimeLocalInputToUtcIso(dueDate), // Use the helper function
+      recurrence_type: recurrenceType, // Include recurrenceType
     };
     onAddTask(newTask);
     setTitle('');
     setPriority('medium');
     setTagsInput('');
     setDueDate('');
+    setRecurrenceType(undefined); // Reset recurrence
   };
 
   return (
@@ -60,12 +64,23 @@ export default function AddTask({ onAddTask }: AddTaskProps) {
           className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
         />
         <input
-          type="date"
+          type="datetime-local"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
           className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
         />
       </div>
+      {/* New Recurrence Type dropdown */}
+      <select
+        value={recurrenceType || ''}
+        onChange={(e) => setRecurrenceType(e.target.value === '' ? undefined : e.target.value as RecurrenceType)}
+        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+      >
+        <option value="">No Recurrence</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
       <button 
         type="submit" 
         className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"

@@ -1,58 +1,89 @@
 // frontend/src/utils/date-format.ts
 
-// Converts a UTC ISO string (from backend) to a YYYY-MM-DDTHH:MM string in the specified timezone for datetime-local input
+const ISLAMABAD_OFFSET_HOURS = 5; // PKT is UTC+5
+
+// Converts a UTC ISO string to YYYY-MM-DDTHH:MM in Islamabad time
 export function formatUtcIsoToDatetimeLocalInput(
-  isoString: string | undefined,
-  timeZone: string = 'Asia/Karachi'
+  isoString: string | undefined
 ): string {
   if (!isoString) return '';
-  const date = new Date(isoString);
+  
+  try {
+    // Ensure the string has 'Z' to be parsed as UTC
+    const utcIsoString = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+    const utcDate = new Date(utcIsoString);
+    if (isNaN(utcDate.getTime())) return '';
 
-  // Use Intl.DateTimeFormat to get timezone-aware components
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23', // Ensure 24-hour format
-    timeZone: timeZone,
-  });
+    // Add 5 hours to convert UTC to Islamabad time
+    const islamabadTime = new Date(utcDate.getTime() + ISLAMABAD_OFFSET_HOURS * 60 * 60 * 1000);
+    
+    // Format as YYYY-MM-DDTHH:MM
+    const year = islamabadTime.getUTCFullYear();
+    const month = String(islamabadTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(islamabadTime.getUTCDate()).padStart(2, '0');
+    const hours = String(islamabadTime.getUTCHours()).padStart(2, '0');
+    const minutes = String(islamabadTime.getUTCMinutes()).padStart(2, '0');
 
-  const parts = formatter.formatToParts(date);
-  const getPart = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)?.value;
-
-  const year = getPart('year');
-  const month = getPart('month');
-  const day = getPart('day');
-  const hour = getPart('hour');
-  const minute = getPart('minute');
-
-  // Intl.DateTimeFormat might return '24' for midnight, which datetime-local doesn't like.
-  // It expects '00' for midnight.
-  const formattedHour = hour === '24' ? '00' : hour;
-
-  return `${year}-${month}-${day}T${formattedHour}:${minute}`;
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return '';
+  }
 }
 
-// Converts a YYYY-MM-DDTHH:MM string (from datetime-local input, assumed to be in the user's local timezone)
-// to a UTC ISO string for the backend.
+// Converts YYYY-MM-DDTHH:MM (treated as Islamabad time) to UTC ISO string
 export function parseDatetimeLocalInputToUtcIso(
-  datetimeLocalString: string | undefined,
+  datetimeLocalString: string | undefined
 ): string | undefined {
   if (!datetimeLocalString) return undefined;
 
-  // Create a Date object from the datetime-local string.
-  // When a 'YYYY-MM-DDTHH:MM' string is passed to new Date(),
-  // it is interpreted as local time if no timezone offset is provided.
-  const localDate = new Date(datetimeLocalString);
+  try {
+    const [datePart, timePart] = datetimeLocalString.split('T');
+    if (!datePart || !timePart) return undefined;
 
-  if (isNaN(localDate.getTime())) {
-    // Invalid date
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+
+    // Create a date treating the input as Islamabad time
+    // We do this by creating a UTC date and then subtracting 5 hours
+    const islamabadDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
+    const utcDate = new Date(islamabadDate.getTime() - ISLAMABAD_OFFSET_HOURS * 60 * 60 * 1000);
+
+    if (isNaN(utcDate.getTime())) return undefined;
+
+    return utcDate.toISOString();
+  } catch (error) {
+    console.error('Error parsing date:', error);
     return undefined;
   }
+}
 
-  // toISOString() converts the date to UTC ISO format,
-  // based on the localDate's interpreted local time.
-  return localDate.toISOString();
+// Format UTC ISO string for display in Islamabad timezone
+export function formatUtcIsoForDisplay(isoString: string | undefined): string {
+  if (!isoString) return '';
+  
+  try {
+    // Ensure the string has 'Z' to be parsed as UTC
+    const utcIsoString = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+    const utcDate = new Date(utcIsoString);
+    if (isNaN(utcDate.getTime())) return '';
+
+    // Add 5 hours to get Islamabad time
+    const islamabadTime = new Date(utcDate.getTime() + ISLAMABAD_OFFSET_HOURS * 60 * 60 * 1000);
+    
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const month = months[islamabadTime.getUTCMonth()];
+    const day = islamabadTime.getUTCDate();
+    const year = islamabadTime.getUTCFullYear();
+    let hours = islamabadTime.getUTCHours();
+    const minutes = String(islamabadTime.getUTCMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+
+    return `${month} ${day}, ${year}, ${hours}:${minutes} ${ampm}`;
+  } catch (error) {
+    console.error('Error formatting date for display:', error);
+    return '';
+  }
 }

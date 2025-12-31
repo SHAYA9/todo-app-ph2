@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { getTasks, createTask, updateTask, deleteTask } from '@/services/api';
+import { useEffect, useState, useCallback, useRef } from 'react'; // Import useRef
+import { getTasks, createTask, updateTask, deleteTask, getUpcomingTasks } from '@/services/api'; // Import getUpcomingTasks
 import { Task } from '@/types/Task';
 import TaskList from '@/components/TaskList';
 import AddTask from '@/components/AddTask';
+import { requestNotificationPermission, showNotification } from '@/utils/notifications'; // Import notification utilities
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -17,7 +18,7 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<string | undefined>(undefined);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
-
+  const notifiedTaskIds = useRef<Set<number>>(new Set()); // To track notified tasks
 
   const fetchTasks = useCallback(async (
     search?: string,
@@ -44,6 +45,47 @@ export default function TasksPage() {
     fetchTasks(searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder);
   }, [fetchTasks, searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder]);
 
+  // Notification Logic - Request permission on mount
+  useEffect(() => {
+    // Request notification permission immediately on page load
+    const initNotifications = async () => {
+      const permission = await requestNotificationPermission();
+      console.log("Notification permission status:", permission);
+      
+      if (permission === "default") {
+        // If user hasn't decided yet, try requesting again after a short delay
+        setTimeout(async () => {
+          await requestNotificationPermission();
+        }, 2000);
+      }
+    };
+    
+    initNotifications();
+
+    const notificationInterval = setInterval(async () => {
+      console.log("Polling for upcoming tasks...");
+      if (Notification.permission === "granted") {
+        try {
+          const upcoming = await getUpcomingTasks(15);
+          console.log("Upcoming tasks received:", upcoming);
+          upcoming.forEach(task => {
+            if (task.id && !notifiedTaskIds.current.has(task.id)) {
+              console.log("Showing notification for task:", task.title, task.id);
+              showNotification(task);
+              notifiedTaskIds.current.add(task.id);
+            }
+          });
+        } catch (err) {
+          console.error("Error fetching upcoming tasks for notifications:", err);
+        }
+      } else {
+        console.warn("Notification permission not granted, skipping poll for notifications.");
+      }
+    }, 60 * 1000); // Poll every 1 minute
+
+    return () => clearInterval(notificationInterval);
+  }, []); // Run once on mount
+
   const handleAddTask = async (taskData: Partial<Task>) => {
     try {
       const newTask = await createTask(taskData);
@@ -57,12 +99,27 @@ export default function TasksPage() {
 
   const handleUpdateTask = async (id: number, updatedTask: Partial<Task>) => {
     try {
+      console.log('Updating task ID:', id, 'with data:', updatedTask);
+      
       const result = await updateTask(id, updatedTask);
-      setTasks(tasks.map((task) => (task.id === id ? result : task)));
+      console.log('Update successful, result:', result);
+      
+      // If the task was archived (recurring task completion), remove it from view
+      if (result.is_archived === true) {
+        console.log('Task archived, removing from list and fetching updated tasks...');
+        // Remove the archived task from state
+        setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+        // Fetch the updated list (which includes the new recurring instance)
+        await fetchTasks(searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder);
+      } else {
+        // For non-recurring tasks or other updates, just update the task in state
+        setTasks(prevTasks => prevTasks.map((task) => (task.id === id ? result : task)));
+      }
+      
       setError(null);
     } catch (err: any) {
-      setError(err.message);
-      console.error(err);
+      console.error('Error updating task:', err);
+      setError(err.message || 'Failed to update task');
     }
   };
 
@@ -77,8 +134,8 @@ export default function TasksPage() {
     }
   };
 
-  const completedCount = tasks.filter(t => t.completed).length;
-  const totalCount = tasks.length;
+  const completedCount = tasks.filter(t => t.completed && !t.is_archived).length;
+  const totalCount = tasks.filter(t => !t.is_archived).length;
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
