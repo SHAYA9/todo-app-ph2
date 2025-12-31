@@ -1,8 +1,26 @@
 from sqlmodel import Session, select, asc, desc
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List
+from uuid import UUID, uuid4
 
 from . import models, schemas
+
+# Helper function to calculate next due_datetime
+def calculate_next_due_datetime(current_due: datetime, recurrence_type: models.RecurrenceTypeEnum) -> datetime:
+    if recurrence_type == models.RecurrenceTypeEnum.daily:
+        return current_due + timedelta(days=1)
+    elif recurrence_type == models.RecurrenceTypeEnum.weekly:
+        return current_due + timedelta(weeks=1)
+    elif recurrence_type == models.RecurrenceTypeEnum.monthly:
+        # Simple monthly calculation: add 1 month. More complex logic needed for end-of-month handling.
+        # For prototype, assuming same day of next month.
+        year = current_due.year
+        month = current_due.month + 1
+        if month > 12:
+            month = 1
+            year += 1
+        return current_due.replace(year=year, month=month)
+    return current_due
 
 def get_tasks(
     db: Session,
@@ -11,9 +29,14 @@ def get_tasks(
     priority: Optional[models.PriorityEnum] = None,
     has_due_date: Optional[bool] = None,
     sort_by: Optional[str] = None,
-    sort_order: Optional[str] = "asc" # Default to ascending
+    sort_order: Optional[str] = "asc", # Default to ascending
+    include_archived: bool = False # New parameter to include archived tasks
 ):
     query = select(models.Task)
+
+    # By default, do not show archived tasks
+    if not include_archived:
+        query = query.where(models.Task.is_archived == False)
 
     if search:
         query = query.where(models.Task.title.ilike(f"%{search}%"))
@@ -23,20 +46,18 @@ def get_tasks(
         query = query.where(models.Task.priority == priority)
     if has_due_date is not None:
         if has_due_date:
-            query = query.where(models.Task.due_date.isnot(None))
+            query = query.where(models.Task.due_datetime.isnot(None))
         else:
-            query = query.where(models.Task.due_date.is_(None))
+            query = query.where(models.Task.due_datetime.is_(None))
     
     if sort_by:
         sort_column = None
         if sort_by == "title":
             sort_column = models.Task.title
         elif sort_by == "priority":
-            # Sorting by enum value, custom logic might be needed for specific order (high, medium, low)
-            # For now, it will sort alphabetically by the string value
             sort_column = models.Task.priority
-        elif sort_by == "due_date":
-            sort_column = models.Task.due_date
+        elif sort_by == "due_datetime": # Changed from due_date
+            sort_column = models.Task.due_datetime
         
         if sort_column:
             if sort_order == "desc":
@@ -47,11 +68,18 @@ def get_tasks(
     return db.exec(query).all()
 
 def create_task(db: Session, task: schemas.TaskCreate):
+    # If recurrence_id is not provided for a recurring task, generate one
+    if task.recurrence_type and task.recurrence_id is None:
+        task.recurrence_id = uuid4()
+
     db_task = models.Task(
         title=task.title,
         priority=task.priority,
         tags=task.tags,
-        due_date=task.due_date
+        due_datetime=task.due_datetime,
+        recurrence_type=task.recurrence_type,
+        recurrence_id=task.recurrence_id,
+        is_archived=task.is_archived
     )
     db.add(db_task)
     db.commit()
@@ -59,21 +87,46 @@ def create_task(db: Session, task: schemas.TaskCreate):
     return db_task
 
 def update_task(db: Session, db_task: models.Task, task_in: schemas.TaskUpdate):
-    if task_in.title is not None:
-        db_task.title = task_in.title
+    # Always update completed status if provided in the input
     if task_in.completed is not None:
         db_task.completed = task_in.completed
+
+    # Handle completion of recurring tasks
+    if task_in.completed is True and db_task.recurrence_type:
+        if db_task.due_datetime is None:
+            # Cannot create next instance without a due_datetime
+            # Just mark current as archived if this happens (completed is already set above)
+            db_task.is_archived = True
+            db_task.completed = True # Mark current task as completed
+        else:
+            # Calculate next due_datetime
+            next_due = calculate_next_due_datetime(db_task.due_datetime, db_task.recurrence_type)
+
+            # Ensure recurrence_id is set
+            if db_task.recurrence_id is None:
+                db_task.recurrence_id = uuid4()
+
+            # Create new recurring task instance
+            new_task = models.Task(
+                title=db_task.title,
+                priority=db_task.priority,
+                tags=db_task.tags,
+                due_datetime=next_due,
+                recurrence_type=db_task.recurrence_type,
+                recurrence_id=db_task.recurrence_id,
+                is_archived=False,
+                completed=False
+            )
+            db.add(new_task) # Add the new task instance
+
+            # Archive the current task instance (completed is already set above)
+            db_task.is_archived = True
+            
+    # Apply other updates
+    if task_in.title is not None:
+        db_task.title = task_in.title
     if task_in.priority is not None:
         db_task.priority = task_in.priority
-    if task_in.tags is not None:
-        db_task.tags = task_in.tags
-    if task_in.due_date is not None:
-        db_task.due_date = task_in.due_date
-    db_task.updated_at = datetime.utcnow()
-    db.add(db_task)
-    db.commit()
-    db.refresh(db_task)
-    return db_task
 
 def delete_task(db: Session, db_task: models.Task):
     db.delete(db_task)
@@ -82,3 +135,17 @@ def delete_task(db: Session, db_task: models.Task):
 
 def get_task(db: Session, task_id: int):
     return db.get(models.Task, task_id)
+
+def get_upcoming_tasks(db: Session, minutes_offset: int = 15) -> List[models.Task]:
+    now = datetime.utcnow()
+    time_limit = now + timedelta(minutes=minutes_offset)
+
+    query = select(models.Task).where(
+        models.Task.completed == False,
+        models.Task.is_archived == False,
+        models.Task.due_datetime.isnot(None),
+        models.Task.due_datetime <= time_limit,
+        models.Task.due_datetime >= now # Only tasks in the future or very recent past within tolerance
+    ).order_by(asc(models.Task.due_datetime))
+    
+    return db.exec(query).all()
