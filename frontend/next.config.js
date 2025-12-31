@@ -1,22 +1,42 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // For Vercel deployment - rewrite API routes to serverless function
+  // API rewrites for different deployment environments
   async rewrites() {
-    // In production (Vercel), proxy to serverless function
-    // In development, proxy to local FastAPI server
-    const apiUrl = process.env.VERCEL_ENV 
-      ? '/api'  // Use Vercel serverless function
-      : 'http://localhost:8000';  // Use local FastAPI server
+    // Detect deployment environment
+    const isHuggingFace = process.env.SPACE_ID || process.env.SPACE_AUTHOR_NAME;
+    const isVercel = process.env.VERCEL_ENV;
     
+    // Hugging Face: Backend runs on same container at port 8000
+    if (isHuggingFace) {
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'http://localhost:8000/:path*',
+        },
+      ];
+    }
+    
+    // Vercel: Use serverless functions
+    if (isVercel) {
+      return [
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*',
+        },
+      ];
+    }
+    
+    // Local development: Proxy to local FastAPI server
     return [
       {
         source: '/api/:path*',
-        destination: process.env.VERCEL_ENV 
-          ? '/api/:path*'  // Route to Vercel serverless function
-          : 'http://localhost:8000/:path*',  // Route to local backend
+        destination: 'http://localhost:8000/:path*',
       },
     ];
   },
+  
+  // Output standalone for Docker deployment
+  output: 'standalone',
 };
 
 module.exports = nextConfig;

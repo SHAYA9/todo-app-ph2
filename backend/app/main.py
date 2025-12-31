@@ -20,22 +20,33 @@ if not os.getenv("VERCEL_ENV"):
 
 app = FastAPI(title="Todo API", version="1.0.0")
 
-# Configure CORS for both local development and Vercel deployment
+# Configure CORS for different deployment environments
 origins = [
-    "http://localhost:3000",  # Local development
+    "http://localhost:3000",  # Local development frontend
     "http://localhost:8000",  # Local backend testing
+    "http://localhost:7860",  # Hugging Face Spaces
 ]
 
-# In production, allow all Vercel preview and production deployments
-if os.getenv("VERCEL_ENV"):
+# Detect deployment environment
+is_vercel = os.getenv("VERCEL_ENV")
+is_huggingface = os.getenv("SPACE_ID") or os.getenv("SPACE_AUTHOR_NAME")
+
+# Add environment-specific origins
+if is_vercel:
     origins.extend([
         "https://*.vercel.app",
         "https://vercel.app",
     ])
+elif is_huggingface:
+    # Hugging Face Spaces
+    space_host = os.getenv("SPACE_HOST", "")
+    if space_host:
+        origins.append(f"https://{space_host}")
+    origins.append("https://*.hf.space")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if not os.getenv("VERCEL_ENV") else ["*"],  # Allow all in Vercel
+    allow_origins=origins if not (is_vercel or is_huggingface) else ["*"],  # Allow all in cloud
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
