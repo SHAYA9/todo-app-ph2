@@ -1,12 +1,14 @@
 import sys
 from pathlib import Path
 
-# Add parent directory to path to import backend module
-backend_path = Path(__file__).parent.parent
-sys.path.insert(0, str(backend_path))
+# Add backend to Python path
+backend_dir = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(backend_dir))
 
+# Import after path is set
+from mangum import Mangum
 from backend.app.main import app
 
-# Export the app for Vercel
-# Vercel's Python runtime expects 'app' or 'application'
-application = app
+# Create handler for Vercel
+# lifespan="off" prevents lifespan events from running on every request
+handler = Mangum(app, lifespan="off", api_gateway_base_path="/api")

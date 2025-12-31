@@ -1,6 +1,9 @@
-from dotenv import load_dotenv
 import os
-load_dotenv() # Load environment variables from .env
+from dotenv import load_dotenv
+
+# Only load .env file in local development
+if not os.getenv("VERCEL_ENV"):
+    load_dotenv()
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,9 +11,12 @@ from sqlmodel import Session
 from typing import List, Optional
 
 from . import crud, models, schemas
-from .database import engine
 
-models.SQLModel.metadata.create_all(bind=engine)
+# Only create tables in local development or on first deploy
+# In serverless, we want to avoid this on every function invocation
+if not os.getenv("VERCEL_ENV"):
+    from .database import engine
+    models.SQLModel.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Todo API", version="1.0.0")
 
