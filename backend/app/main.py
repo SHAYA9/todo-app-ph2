@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import os
 load_dotenv() # Load environment variables from .env
 
 from fastapi import FastAPI, Depends, HTTPException
@@ -11,12 +12,24 @@ from .database import engine
 
 models.SQLModel.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(title="Todo API", version="1.0.0")
 
-# Add CORS middleware
+# Configure CORS for both local development and Vercel deployment
+origins = [
+    "http://localhost:3000",  # Local development
+    "http://localhost:8000",  # Local backend testing
+]
+
+# In production, allow all Vercel preview and production deployments
+if os.getenv("VERCEL_ENV"):
+    origins.extend([
+        "https://*.vercel.app",
+        "https://vercel.app",
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins if not os.getenv("VERCEL_ENV") else ["*"],  # Allow all in Vercel
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

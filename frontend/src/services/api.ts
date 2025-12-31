@@ -18,7 +18,7 @@ export const getTasks = async (
   sort_by?: string,
   sort_order?: string
 ): Promise<Task[]> => {
-  const url = new URL(`${API_URL}/tasks`);
+  const url = new URL(`${API_URL}/tasks`, window.location.origin);
   if (search) {
     url.searchParams.append('search', search);
   }
@@ -72,7 +72,7 @@ export const deleteTask = async (id: number): Promise<void> => {
 };
 
 export const getUpcomingTasks = async (minutesOffset: number = 15): Promise<Task[]> => {
-  const url = new URL(`${API_URL}/tasks/upcoming`);
+  const url = new URL(`${API_URL}/tasks/upcoming`, window.location.origin);
   url.searchParams.append('minutes_offset', minutesOffset.toString());
   const response = await fetch(url.toString());
   return handleError(response).then((res) => res.json());
