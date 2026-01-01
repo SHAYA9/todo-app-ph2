@@ -35,8 +35,8 @@ const nextConfig = {
     ];
   },
   
-  // Output standalone for Docker deployment
-  output: 'standalone',
+  // Don't use standalone for Vercel
+  // output: 'standalone',
 };
 
 module.exports = nextConfig;
