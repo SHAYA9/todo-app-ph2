@@ -12,10 +12,10 @@ from typing import List, Optional
 
 from . import crud, models, schemas
 
-# Only create tables in local development or on first deploy
-# In serverless, we want to avoid this on every function invocation
+# Create tables on startup (Railway, Hugging Face, local dev)
+# Skip for Vercel serverless to avoid on every function invocation
+from .database import engine
 if not os.getenv("VERCEL_ENV"):
-    from .database import engine
     models.SQLModel.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Todo API", version="1.0.0")
@@ -30,6 +30,7 @@ origins = [
 # Detect deployment environment
 is_vercel = os.getenv("VERCEL_ENV")
 is_huggingface = os.getenv("SPACE_ID") or os.getenv("SPACE_AUTHOR_NAME")
+is_railway = os.getenv("RAILWAY_ENVIRONMENT")
 
 # Add environment-specific origins
 if is_vercel:
@@ -43,10 +44,16 @@ elif is_huggingface:
     if space_host:
         origins.append(f"https://{space_host}")
     origins.append("https://*.hf.space")
+elif is_railway:
+    # Railway deployment - use environment variable for CORS
+    cors_origins_env = os.getenv("CORS_ORIGINS", "")
+    if cors_origins_env:
+        # Split comma-separated origins
+        origins.extend([origin.strip() for origin in cors_origins_env.split(",")])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if not (is_vercel or is_huggingface) else ["*"],  # Allow all in cloud
+    allow_origins=origins if not (is_vercel or is_huggingface or is_railway) else ["*"],  # Allow all in cloud
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,6 +1,7 @@
 import { Task } from '@/types/Task';
 
-const API_URL = '/api';
+// Use environment variable for production, fallback to /api for development
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 const handleError = async (response: Response) => {
   if (!response.ok) {
