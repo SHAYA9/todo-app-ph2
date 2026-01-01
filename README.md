@@ -14,7 +14,20 @@ A full-stack todo application with Next.js frontend and FastAPI backend, deploye
 - SQLModel
 - PostgreSQL (Neon)
 
-## Local Development
+## 🚀 Quick Deploy to Vercel (Recommended)
+
+**See detailed guide:** [VERCEL_DEPLOYMENT_GUIDE.md](./VERCEL_DEPLOYMENT_GUIDE.md)
+
+**Quick steps:**
+1. Get free database from [neon.tech](https://neon.tech)
+2. Push code to GitHub
+3. Deploy on [vercel.com](https://vercel.com) (set root directory to `frontend`)
+4. Add `DATABASE_URL` environment variable
+5. Done! ✅
+
+---
+
+## 🖥️ Local Development
 
 ### Prerequisites
 - Node.js 18+ and npm
