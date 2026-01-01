@@ -16,12 +16,12 @@ const nextConfig = {
       ];
     }
     
-    // Vercel: Use serverless functions
+    // Vercel: Proxy to Railway backend
     if (isVercel) {
       return [
         {
           source: '/api/:path*',
-          destination: '/api/:path*',
+          destination: 'https://todo-app-ph2-production.up.railway.app/:path*',
         },
       ];
     }
