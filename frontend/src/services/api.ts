@@ -1,7 +1,7 @@
 import { Task } from '@/types/Task';
 
-// Use environment variable for production, fallback to /api for development
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// Use environment variable with Railway backend URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://todo-app-ph2-production.up.railway.app';
 
 const handleError = async (response: Response) => {
   if (!response.ok) {
@@ -19,7 +19,7 @@ export const getTasks = async (
   sort_by?: string,
   sort_order?: string
 ): Promise<Task[]> => {
-  const url = new URL(`${API_URL}/tasks`, window.location.origin);
+  const url = new URL(`${API_URL}/tasks`);
   if (search) {
     url.searchParams.append('search', search);
   }
@@ -73,7 +73,7 @@ export const deleteTask = async (id: number): Promise<void> => {
 };
 
 export const getUpcomingTasks = async (minutesOffset: number = 15): Promise<Task[]> => {
-  const url = new URL(`${API_URL}/tasks/upcoming`, window.location.origin);
+  const url = new URL(`${API_URL}/tasks/upcoming`);
   url.searchParams.append('minutes_offset', minutesOffset.toString());
   const response = await fetch(url.toString());
   return handleError(response).then((res) => res.json());
