@@ -178,15 +178,15 @@ export default function TasksPage() {
             <div className="flex items-center gap-4">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl px-22 py-2">
                 <div className="text-sm font-medium">Total</div>
-                <div className="text-2xl font-bold">{totalCount}</div>
+                <div className="text-2xl pl-2 font-bold">{totalCount}</div>
               </div>
               <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl px-22 py-2">
                 <div className="text-sm font-medium">Completed</div>
-                <div className="text-2xl font-bold">{completedCount}</div>
+                <div className="text-2xl pl-6 font-bold">{completedCount}</div>
               </div>
               <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl px-22 py-2">
                 <div className="text-sm font-medium">Pending</div>
-                <div className="text-2xl font-bold">{totalCount - completedCount}</div>
+                <div className="text-2xl pl-5 font-bold">{totalCount - completedCount}</div>
               </div>
             </div>
           </div>
