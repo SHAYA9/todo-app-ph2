@@ -12,15 +12,19 @@ This happens because Vercel no longer supports Python serverless functions in th
 
 ### Step 1: Deploy Backend Separately (Choose One Platform)
 
-#### Option A: Railway (Recommended - Easiest)
-1. Go to https://railway.app
-2. Click "Start a New Project" → "Deploy from GitHub repo"
-3. Select your repository
-4. **Important**: Set "Root Directory" to `backend`
-5. Add environment variable:
-   - `DATABASE_URL`: Use Railway's built-in PostgreSQL
+#### Option A: Railway + Neon DB (Recommended - Best Free Tier)
+1. **First**: Create free database at https://neon.tech
+   - Sign up → Create Project → Copy connection string (use "Pooled")
+2. Go to https://railway.app
+3. Click "Start a New Project" → "Deploy from GitHub repo"
+4. Select your repository
+5. **Important**: Set "Root Directory" to `backend`
+6. Add environment variables:
+   - `DATABASE_URL`: Your Neon connection string
    - `CORS_ORIGINS`: `*` (temporary, update after frontend deployment)
-6. Deploy → Save the URL (e.g., `https://your-app.railway.app`)
+7. Deploy → Save the URL (e.g., `https://your-app.railway.app`)
+
+**See `RAILWAY_WITH_NEON_DB_GUIDE.md` for detailed Neon + Railway setup**
 
 #### Option B: Render
 1. Go to https://render.com
