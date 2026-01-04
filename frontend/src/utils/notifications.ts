@@ -2,63 +2,6 @@
 import { Task } from '@/types/Task';
 import { formatUtcIsoForDisplay } from './date-format';
 
-const VAPID_PUBLIC_KEY = "BL4pAnypP1Sm7XmYjoCfg3XAqoKS9DySNmTT4KNemgpJJQ2-GGlZlQCdCV769Kc6DdkH4WbHCUonnUdsOvxPCf4"; // Replace with your VAPID public key
-
-function urlBase64ToUint8Array(base64String: string) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-}
-
-export async function registerServiceWorker() {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-        try {
-            const swReg = await navigator.serviceWorker.register('/sw.js');
-            console.log('Service Worker registered:', swReg);
-
-            let subscription = await swReg.pushManager.getSubscription();
-            if (subscription === null) {
-                subscription = await swReg.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-                });
-                console.log('New subscription:', subscription);
-                await sendSubscriptionToBackend(subscription);
-            } else {
-                console.log('Existing subscription:', subscription);
-            }
-        } catch (error) {
-            console.error('Service Worker registration failed:', error);
-        }
-    }
-}
-
-async function sendSubscriptionToBackend(subscription: PushSubscription) {
-    try {
-        const response = await fetch('/api/subscribe', { // This endpoint needs to be created on the backend
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(subscription),
-        });
-        if (!response.ok) {
-            throw new Error('Failed to send subscription to backend');
-        }
-    } catch (error) {
-        console.error('Error sending subscription to backend:', error);
-    }
-}
-
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!('Notification' in window)) {
     console.warn("⚠️ This browser does not support desktop notifications");
@@ -68,7 +11,6 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   // Check if permission is already granted
   if (Notification.permission === "granted") {
     console.log("✅ Notification permission already granted");
-    registerServiceWorker(); // Register the service worker if permission is granted
     return Notification.permission;
   }
   
@@ -84,7 +26,6 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
       console.log("✅ Notification permission granted! You'll receive task reminders.");
-      registerServiceWorker(); // Register the service worker after permission is granted
       // Show a test notification
       new Notification("Notifications Enabled!", {
         body: "You'll now receive reminders for your upcoming tasks.",
@@ -110,10 +51,21 @@ export function showNotification(task: Task) {
       icon: '/favicon.ico',
       data: task.id,
     };
-    navigator.serviceWorker.ready.then(registration => {
-        registration.showNotification(title, options);
-    });
+    new Notification(title, options);
   } else {
     console.warn("Notification permission not granted. Cannot show notification for task:", task.title);
   }
 }
+
+// Function to schedule/poll for notifications - to be integrated into TasksPage
+// This part will be integrated in TasksPage.tsx
+// export async function pollForNotifications(intervalMinutes: number, minutesOffset: number) {
+//   setInterval(async () => {
+//     const permission = await requestNotificationPermission();
+//     if (permission === "granted") {
+//       // Fetch upcoming tasks from your API
+//       // Example: const upcomingTasks = await getUpcomingTasks(minutesOffset);
+//       // upcomingTasks.forEach(task => showNotification(task));
+//     }
+//   }, intervalMinutes * 60 * 1000);
+// }

@@ -202,24 +202,3 @@ def create_user(db: Session, user: schemas.UserCreate, hashed_password: str) -> 
     db.commit()
     db.refresh(db_user)
     return db_user
-
-# Push Subscription CRUD operations
-def create_push_subscription(db: Session, subscription: dict, user_id: int):
-    db_subscription = models.PushSubscription(
-        subscription_info=subscription,
-        user_id=user_id
-    )
-    db.add(db_subscription)
-    db.commit()
-    db.refresh(db_subscription)
-    return db_subscription
-
-def get_push_subscriptions_by_user(db: Session, user_id: int) -> List[models.PushSubscription]:
-    query = select(models.PushSubscription).where(models.PushSubscription.user_id == user_id)
-    return db.exec(query).all()
-
-def delete_push_subscription(db: Session, subscription_id: int):
-    subscription = db.get(models.PushSubscription, subscription_id)
-    if subscription:
-        db.delete(subscription)
-        db.commit()

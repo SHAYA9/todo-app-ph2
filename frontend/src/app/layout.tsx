@@ -1,20 +1,19 @@
-"use client";
-import { useEffect } from "react";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { requestNotificationPermission } from "@/utils/notifications";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "TaskFLow by Xpertsphere",
+  description: "Track your tasks efficiently with Xpertsphere's Todo App.",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  useEffect(() => {
-    requestNotificationPermission();
-  }, []);
-
   return (
     <html lang="en">
       <body className={inter.className}>{children}</body>

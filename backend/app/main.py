@@ -9,8 +9,6 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 from typing import List, Optional
-from pywebpush import webpush, WebPushException
-import json
 
 from . import crud, models, schemas, auth
 
@@ -161,13 +159,7 @@ def create_task(
 ):
     if user_id != current_user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    
-    db_task = crud.create_task(db=db, task=task, user_id=current_user_id)
-    
-    if db_task.due_datetime:
-        send_notification(db_task, db)
-
-    return db_task
+    return crud.create_task(db=db, task=task, user_id=current_user_id)
 
 @app.get("/api/{user_id}/tasks/{task_id}", response_model=schemas.TaskInDB)
 def read_task(
@@ -225,33 +217,6 @@ def toggle_task_completion(
         raise HTTPException(status_code=404, detail="Task not found")
     
     return crud.update_task(db=db, db_task=db_task, task_in=schemas.TaskUpdate(completed=not db_task.completed))
-
-@app.post("/api/subscribe")
-def subscribe(subscription: dict, current_user_id: int = Depends(auth.get_current_user_id), db: Session = Depends(get_db)):
-    crud.create_push_subscription(db, subscription, current_user_id)
-    return {"message": "Subscription successful"}
-
-def send_notification(task: models.Task, db: Session):
-    subscriptions = crud.get_push_subscriptions_by_user(db, task.user_id)
-    for sub in subscriptions:
-        try:
-            webpush(
-                subscription_info=sub.subscription_info,
-                data=json.dumps({
-                    "title": f"Task Due: {task.title}",
-                    "body": f"Priority: {task.priority}\nDue: {task.due_datetime}",
-                    "icon": "/favicon.ico",
-                    "data": {"taskId": task.id}
-                }),
-                vapid_private_key=os.getenv("VAPID_PRIVATE_KEY"),
-                vapid_claims={"sub": f"mailto:{os.getenv('VAPID_CLAIM_EMAIL')}"}
-            )
-        except WebPushException as ex:
-            print(f"Error sending notification: {ex}")
-            if ex.response and ex.response.status_code == 410:
-                # Subscription is no longer valid, remove from DB
-                crud.delete_push_subscription(db, sub.id)
-
 
 @app.get("/")
 def read_root():
