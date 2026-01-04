@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from 'react'; // Import useRef
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { getTasks, createTask, updateTask, deleteTask, getUpcomingTasks } from '@/services/api'; // Import getUpcomingTasks
 import { Task } from '@/types/Task';
 import TaskList from '@/components/TaskList';
 import AddTask from '@/components/AddTask';
 import { requestNotificationPermission, showNotification } from '@/utils/notifications'; // Import notification utilities
-import Link from 'next/link';
 
 export default function TasksPage() {
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCompleted, setFilterCompleted] = useState<boolean | undefined>(undefined);
   const [filterPriority, setFilterPriority] = useState<Task['priority'] | undefined>(undefined);
@@ -42,12 +46,29 @@ export default function TasksPage() {
     }
   }, []);
 
+  // Check authentication on mount
   useEffect(() => {
-    fetchTasks(searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder);
-  }, [fetchTasks, searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder]);
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    if (!token || !userStr) {
+      router.push('/signin');
+      return;
+    }
+    
+    setUser(JSON.parse(userStr));
+    setIsAuthenticated(true);
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchTasks(searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder);
+    }
+  }, [isAuthenticated, fetchTasks, searchTerm, filterCompleted, filterPriority, filterHasDueDate, sortBy, sortOrder]);
 
   // Notification Logic - Request permission on mount
   useEffect(() => {
+    if (!isAuthenticated) return;
     // Request notification permission immediately on page load
     const initNotifications = async () => {
       const permission = await requestNotificationPermission();
@@ -156,20 +177,53 @@ export default function TasksPage() {
     }
   };
 
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/signin');
+  };
+
   const completedCount = tasks.filter(t => t.completed && !t.is_archived).length;
   const totalCount = tasks.filter(t => !t.is_archived).length;
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-26 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-500 to-purple-800 bg-clip-text text-transparent">
-                  TaskFlow
-                </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Stay organized and productive
-          </p>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-center flex-1">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-500 to-purple-800 bg-clip-text text-transparent">
+                TaskFlow
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Stay organized and productive
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Welcome,</p>
+                <p className="font-medium text-gray-900 dark:text-white">{user?.name}</p>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-all duration-300"
+                title="Sign Out"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Stats Card */}

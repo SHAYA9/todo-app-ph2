@@ -24,6 +24,7 @@ def calculate_next_due_datetime(current_due: datetime, recurrence_type: models.R
 
 def get_tasks(
     db: Session,
+    user_id: int,
     search: Optional[str] = None,
     completed: Optional[bool] = None,
     priority: Optional[models.PriorityEnum] = None,
@@ -32,7 +33,7 @@ def get_tasks(
     sort_order: Optional[str] = "asc", # Default to ascending
     include_archived: bool = False # New parameter to include archived tasks
 ):
-    query = select(models.Task)
+    query = select(models.Task).where(models.Task.user_id == user_id)
 
     # By default, do not show archived tasks
     if not include_archived:
@@ -67,7 +68,7 @@ def get_tasks(
 
     return db.exec(query).all()
 
-def create_task(db: Session, task: schemas.TaskCreate):
+def create_task(db: Session, task: schemas.TaskCreate, user_id: int):
     # If recurrence_id is not provided for a recurring task, generate one
     if task.recurrence_type and task.recurrence_id is None:
         task.recurrence_id = uuid4()
@@ -79,7 +80,8 @@ def create_task(db: Session, task: schemas.TaskCreate):
         due_datetime=task.due_datetime,
         recurrence_type=task.recurrence_type,
         recurrence_id=task.recurrence_id,
-        is_archived=task.is_archived
+        is_archived=task.is_archived,
+        user_id=user_id
     )
     db.add(db_task)
     db.commit()
@@ -123,7 +125,8 @@ def update_task(db: Session, db_task: models.Task, task_in: schemas.TaskUpdate):
                 recurrence_type=db_task.recurrence_type,
                 recurrence_id=db_task.recurrence_id,
                 is_archived=False,
-                completed=False
+                completed=False,
+                user_id=db_task.user_id
             )
             db.add(new_task) # Add the new task instance
             newly_created_task = new_task # Store reference to the newly created task
@@ -169,11 +172,12 @@ def delete_task(db: Session, db_task: models.Task):
 def get_task(db: Session, task_id: int):
     return db.get(models.Task, task_id)
 
-def get_upcoming_tasks(db: Session, minutes_offset: int = 15) -> List[models.Task]:
+def get_upcoming_tasks(db: Session, user_id: int, minutes_offset: int = 15) -> List[models.Task]:
     now = datetime.utcnow()
     time_limit = now + timedelta(minutes=minutes_offset)
 
     query = select(models.Task).where(
+        models.Task.user_id == user_id,
         models.Task.completed == False,
         models.Task.is_archived == False,
         models.Task.due_datetime.isnot(None),
@@ -182,3 +186,19 @@ def get_upcoming_tasks(db: Session, minutes_offset: int = 15) -> List[models.Tas
     ).order_by(asc(models.Task.due_datetime))
     
     return db.exec(query).all()
+
+# User CRUD operations
+def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
+    query = select(models.User).where(models.User.email == email)
+    return db.exec(query).first()
+
+def create_user(db: Session, user: schemas.UserCreate, hashed_password: str) -> models.User:
+    db_user = models.User(
+        email=user.email,
+        name=user.name,
+        hashed_password=hashed_password
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user

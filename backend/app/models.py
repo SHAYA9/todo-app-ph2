@@ -17,6 +17,13 @@ class RecurrenceTypeEnum(str, enum.Enum):
     weekly = "weekly"
     monthly = "monthly"
 
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, index=True)
+    name: str
+    hashed_password: str
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
 class Task(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
@@ -27,5 +34,6 @@ class Task(SQLModel, table=True):
     recurrence_type: Optional[RecurrenceTypeEnum] = Field(default=None, sa_column=Column(SQLEnum(RecurrenceTypeEnum), nullable=True))
     recurrence_id: Optional[UUID] = Field(default=None, index=True) # Use UUID for recurrence_id
     is_archived: bool = Field(default=False)
+    user_id: int = Field(foreign_key="user.id", index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
