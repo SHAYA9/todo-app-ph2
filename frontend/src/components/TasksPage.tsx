@@ -92,23 +92,36 @@ export default function TasksPage() {
     initNotifications();
 
     const notificationInterval = setInterval(async () => {
-      console.log("Polling for upcoming tasks...");
+      const now = new Date();
+      console.log("🔍 Polling for upcoming tasks at", now.toLocaleString());
+      console.log("📊 Current UTC time:", now.toISOString());
+      console.log("🔔 Looking for tasks due within next 15 minutes");
+      
       if (Notification.permission === "granted") {
         try {
           const upcoming = await getUpcomingTasks(15);
-          console.log("Upcoming tasks received:", upcoming);
+          console.log("📋 Upcoming tasks received:", upcoming.length > 0 ? upcoming : "No tasks due soon");
+          
+          if (upcoming.length === 0) {
+            console.log("ℹ️ No tasks found within the next 15 minutes");
+            console.log("💡 TIP: Create a task with due date/time within 15 minutes to test notifications");
+          }
+          
           upcoming.forEach(task => {
             if (task.id && !notifiedTaskIds.current.has(task.id)) {
-              console.log("Showing notification for task:", task.title, task.id);
+              console.log("🔔 Showing notification for task:", task.title, "ID:", task.id);
+              console.log("📅 Task due at:", task.due_datetime);
               showNotification(task);
               notifiedTaskIds.current.add(task.id);
+            } else if (task.id) {
+              console.log("⏭️ Skipping already notified task:", task.title);
             }
           });
         } catch (err) {
-          console.error("Error fetching upcoming tasks for notifications:", err);
+          console.error("❌ Error fetching upcoming tasks for notifications:", err);
         }
       } else {
-        console.warn("Notification permission not granted, skipping poll for notifications.");
+        console.warn("⚠️ Notification permission not granted, skipping poll for notifications.");
       }
     }, 60 * 1000); // Poll every 1 minute
 
@@ -183,6 +196,21 @@ export default function TasksPage() {
     router.push('/signin');
   };
 
+  const testNotification = () => {
+    if (Notification.permission === "granted") {
+      new Notification("🧪 Test Notification", {
+        body: "Notifications are working! This is a test notification.",
+        icon: '/favicon.ico',
+        tag: 'test-notification',
+        requireInteraction: false
+      });
+      console.log("✅ Test notification sent");
+    } else {
+      console.warn("⚠️ Notification permission not granted");
+      alert("Please grant notification permission first");
+    }
+  };
+
   const completedCount = tasks.filter(t => t.completed && !t.is_archived).length;
   const totalCount = tasks.filter(t => !t.is_archived).length;
 
@@ -213,6 +241,16 @@ export default function TasksPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">Welcome,</p>
                 <p className="font-medium text-gray-900 dark:text-white">{user?.name}</p>
               </div>
+              {/* <button
+                onClick={testNotification}
+                className="px-3 py-2 sm:px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 flex items-center gap-2"
+                title="Test Notification"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span className="hidden sm:inline">Test</span>
+              </button> */}
               <button
                 onClick={handleSignOut}
                 className="px-3 py-2 sm:px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-all duration-300"

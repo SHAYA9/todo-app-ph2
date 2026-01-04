@@ -175,6 +175,11 @@ def get_task(db: Session, task_id: int):
 def get_upcoming_tasks(db: Session, user_id: int, minutes_offset: int = 15) -> List[models.Task]:
     now = datetime.utcnow()
     time_limit = now + timedelta(minutes=minutes_offset)
+    
+    print(f"🔍 Checking for upcoming tasks:")
+    print(f"   Current UTC time: {now}")
+    print(f"   Time limit: {time_limit}")
+    print(f"   Minutes offset: {minutes_offset}")
 
     query = select(models.Task).where(
         models.Task.user_id == user_id,
@@ -185,7 +190,12 @@ def get_upcoming_tasks(db: Session, user_id: int, minutes_offset: int = 15) -> L
         models.Task.due_datetime >= now # Only tasks in the future or very recent past within tolerance
     ).order_by(asc(models.Task.due_datetime))
     
-    return db.exec(query).all()
+    results = db.exec(query).all()
+    print(f"✅ Found {len(results)} upcoming tasks")
+    for task in results:
+        print(f"   - Task: {task.title}, Due: {task.due_datetime}")
+    
+    return results
 
 # User CRUD operations
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:

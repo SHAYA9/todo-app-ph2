@@ -42,18 +42,21 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 }
 
 export function showNotification(task: Task) {
-  console.log("Attempting to show notification for task:", task);
+  console.log("🔔 Attempting to show notification for task:", task);
   if (Notification.permission === "granted") {
-    const title = `Task Due: ${task.title}`;
+    const title = `⏰ Task Due: ${task.title}`;
     const dueTime = task.due_datetime ? formatUtcIsoForDisplay(task.due_datetime) : '';
     const options: NotificationOptions = {
       body: `Priority: ${task.priority}${dueTime ? '\nDue: ' + dueTime : ''}`,
       icon: '/favicon.ico',
+      tag: `task-${task.id}`, // Prevent duplicate notifications
+      requireInteraction: true, // Keep notification visible until user interacts
       data: task.id,
     };
+    console.log("✅ Showing notification:", title);
     new Notification(title, options);
   } else {
-    console.warn("Notification permission not granted. Cannot show notification for task:", task.title);
+    console.warn("⚠️ Notification permission not granted. Cannot show notification for task:", task.title);
   }
 }
 
