@@ -195,27 +195,27 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="min-h-screen py-26 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-center flex-1">
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-500 to-purple-800 bg-clip-text text-transparent">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+            <div className="text-center sm:text-left flex-1 w-full sm:w-auto">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-500 to-purple-800 bg-clip-text text-transparent">
                 TaskFlow
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Stay organized and productive
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="text-right hidden sm:block">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Welcome,</p>
                 <p className="font-medium text-gray-900 dark:text-white">{user?.name}</p>
               </div>
               <button
                 onClick={handleSignOut}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-all duration-300"
+                className="px-3 py-2 sm:px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-all duration-300"
                 title="Sign Out"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,28 +227,26 @@ export default function TasksPage() {
         </div>
 
         {/* Stats Card */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 mb-6 shadow-md">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl px-22 py-2">
-                <div className="text-sm font-medium">Total</div>
-                <div className="text-2xl pl-2 font-bold">{totalCount}</div>
-              </div>
-              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl px-22 py-2">
-                <div className="text-sm font-medium">Completed</div>
-                <div className="text-2xl pl-6 font-bold">{completedCount}</div>
-              </div>
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl px-22 py-2">
-                <div className="text-sm font-medium">Pending</div>
-                <div className="text-2xl pl-5 font-bold">{totalCount - completedCount}</div>
-              </div>
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-md">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3">
+              <div className="text-xs sm:text-sm font-medium">Total</div>
+              <div className="text-xl sm:text-2xl font-bold">{totalCount}</div>
+            </div>
+            <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3">
+              <div className="text-xs sm:text-sm font-medium">Completed</div>
+              <div className="text-xl sm:text-2xl font-bold">{completedCount}</div>
+            </div>
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-3">
+              <div className="text-xs sm:text-sm font-medium">Pending</div>
+              <div className="text-xl sm:text-2xl font-bold">{totalCount - completedCount}</div>
             </div>
           </div>
         </div>
 
         {/* Main Card */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-md overflow-hidden">
-          <div className="p-6">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md overflow-hidden">
+          <div className="p-4 sm:p-6">
             {/* Add Task Section */}
             <AddTask onAddTask={handleAddTask} />
 
@@ -265,13 +263,13 @@ export default function TasksPage() {
             </div>
 
             {showAdvancedSearch && (
-              <div className="mb-4 space-y-4 transition-all duration-300 ease-in-out">
+              <div className="mb-4 space-y-3 sm:space-y-4 transition-all duration-300 ease-in-out">
                 {/* Filter Controls */}
-                <div className="flex gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <select
                     value={filterCompleted === undefined ? '' : filterCompleted.toString()}
                     onChange={(e) => setFilterCompleted(e.target.value === '' ? undefined : e.target.value === 'true')}
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                    className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-sm sm:text-base text-gray-900 dark:text-white"
                   >
                     <option value="">All Status</option>
                     <option value="true">Completed</option>
@@ -280,7 +278,7 @@ export default function TasksPage() {
                   <select
                     value={filterPriority || ''}
                     onChange={(e) => setFilterPriority(e.target.value === '' ? undefined : e.target.value as Task['priority'])}
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                    className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-sm sm:text-base text-gray-900 dark:text-white"
                   >
                     <option value="">All Priorities</option>
                     <option value="high">High</option>
@@ -290,7 +288,7 @@ export default function TasksPage() {
                   <select
                     value={filterHasDueDate === undefined ? '' : filterHasDueDate.toString()}
                     onChange={(e) => setFilterHasDueDate(e.target.value === '' ? undefined : e.target.value === 'true')}
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                    className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-sm sm:text-base text-gray-900 dark:text-white"
                   >
                     <option value="">All Due Dates</option>
                     <option value="true">Has Due Date</option>
@@ -299,11 +297,11 @@ export default function TasksPage() {
                 </div>
                 
                 {/* Sort Controls */}
-                <div className="flex gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <select
                     value={sortBy || ''}
                     onChange={(e) => setSortBy(e.target.value === '' ? undefined : e.target.value)}
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                    className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-sm sm:text-base text-gray-900 dark:text-white"
                   >
                     <option value="">Sort By</option>
                     <option value="title">Title</option>
@@ -313,7 +311,7 @@ export default function TasksPage() {
                   <select
                     value={sortOrder || ''}
                     onChange={(e) => setSortOrder(e.target.value === '' ? undefined : e.target.value)}
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-gray-900 dark:text-white"
+                    className="px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 text-sm sm:text-base text-gray-900 dark:text-white"
                   >
                     <option value="">Order</option>
                     <option value="asc">Ascending</option>
@@ -352,8 +350,8 @@ export default function TasksPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 mb-6">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-md p-6">
+        <div className="mt-8 sm:mt-12 mb-6">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md p-4 sm:p-6">
             <div className="flex flex-col items-center gap-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
