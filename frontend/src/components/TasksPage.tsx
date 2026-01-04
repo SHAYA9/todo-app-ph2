@@ -113,7 +113,7 @@ export default function TasksPage() {
     }, 60 * 1000); // Poll every 1 minute
 
     return () => clearInterval(notificationInterval);
-  }, []); // Run once on mount
+  }, [isAuthenticated]); // Run when authentication state changes
 
   const handleAddTask = async (taskData: Partial<Task>) => {
     try {
