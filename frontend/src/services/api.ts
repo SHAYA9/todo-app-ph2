@@ -102,7 +102,7 @@ export const deleteTask = async (id: number): Promise<void> => {
   return handleError(response).then(() => {});
 };
 
-export const getUpcomingTasks = async (minutesOffset: number = 15): Promise<Task[]> => {
+export const getUpcomingTasks = async (minutesOffset: number = 1): Promise<Task[]> => {
   const userId = getUserId();
   const url = new URL(`${API_URL}/api/${userId}/tasks/upcoming`);
   url.searchParams.append('minutes_offset', minutesOffset.toString());
