@@ -99,7 +99,7 @@ export default function TasksPage() {
       
       if (Notification.permission === "granted") {
         try {
-          const upcoming = await getUpcomingTasks(15);
+          const upcoming = await getUpcomingTasks(1);
           console.log("📋 Upcoming tasks received:", upcoming.length > 0 ? upcoming : "No tasks due soon");
           
           if (upcoming.length === 0) {
