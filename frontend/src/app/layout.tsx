@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TaskFlow by taskflow-xs | Todo App & Productivity Tool",
+  title: "TaskFlow by Xpertsphere | Todo App & Productivity Tool",
   description: "Track your tasks efficiently with TaskFlow. Stay organized, productive, and achieve more with our intuitive todo app.",
   keywords: [
     "taskflow-xs",
